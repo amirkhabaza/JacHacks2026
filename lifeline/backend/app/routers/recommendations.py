@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Query
 
-from app.models.schemas import RecommendationsResponse
+from app.models.schemas import Recommendation, RecommendationsResponse
 from app.services.jac_runtime import jac_runtime
 
 router = APIRouter(tags=["recommendations"])
@@ -10,7 +10,7 @@ router = APIRouter(tags=["recommendations"])
 def get_recommendations(incident_id: str | None = Query(default=None)) -> RecommendationsResponse:
     snap = jac_runtime.get_dashboard(incident_id)
     return RecommendationsResponse(
-        recommendations=snap.get("recommendations", []),
-        confidence=snap.get("confidence", {}),
-        explanation=snap.get("explanation", ""),
+        recommendations=[
+            Recommendation(**item) for item in snap.get("recommendations", [])
+        ],
     )

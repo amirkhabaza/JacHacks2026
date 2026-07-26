@@ -40,8 +40,8 @@ The Next.js dashboard visualizes live graph traversal (React Flow) and walker ti
                                 │ spawn walkers
 ┌───────────────────────────────▼─────────────────────────────────┐
 │                     Jac Graph Engine (jac/)                     │
-│  ingest_report → verify_reports → propagate_failures            │
-│       → allocate_resources → explain_decision → dashboard_state │
+│  IngestReport → VerifyReports → PropagateFailures               │
+│       → AllocateResources → ExplainDecision → DashboardState    │
 │                     + by llm() extract / summarize              │
 └───────────────────────────────┬─────────────────────────────────┘
                                 │ optional audit mirror
@@ -85,12 +85,12 @@ lifeline/
 ## How Jac Works (in Lifeline)
 
 1. A report hits `POST /report`.
-2. The bridge spawns **`ingest_report`**, which calls **`extract_entities` (`by llm()`)** and materializes nodes/edges.
-3. **`verify_reports`** walks sibling claims, writing `corroborates` / `contradicts`.
-4. **`propagate_failures`** follows `depends_on` to cascade outages.
-5. **`allocate_resources`** matches supply to `requires`, writing `assigned_to`.
-6. **`explain_decision`** narrates the plan for operators.
-7. **`dashboard_state`** projects the graph for the UI.
+2. The bridge spawns **`IngestReport`**, which uses `by llm()` when a model is configured and a deterministic safety fallback otherwise.
+3. **`VerifyReports`** walks sibling claims, writing `Corroborates` / `Contradicts`.
+4. **`PropagateFailures`** follows dependencies to cascade outages.
+5. **`AllocateResources`** matches supply to requirements, writing `AssignedTo`.
+6. **`ExplainDecision`** creates a graph-grounded operator rationale.
+7. **`DashboardState`** projects the graph for the UI.
 
 The graph remains the **only** source of truth.
 
@@ -100,12 +100,12 @@ The graph remains the **only** source of truth.
 
 | Walker | Responsibility |
 | ------ | ---------------- |
-| `ingest_report` | LLM extract → create Report/Source/Incident + edges |
-| `verify_reports` | Corroboration / contradiction scoring |
-| `propagate_failures` | Cascade along `depends_on` |
-| `allocate_resources` | Match Resources/Vehicles to needs |
-| `explain_decision` | Operator-facing rationale (`by llm()`) |
-| `dashboard_state` | UI snapshot (nodes, edges, timeline) |
+| `IngestReport` | LLM/fallback extract → create Report/Source/Incident + edges |
+| `VerifyReports` | Source-weighted corroboration / contradiction scoring |
+| `PropagateFailures` | Cascade infrastructure and population impact |
+| `AllocateResources` | Match available resources to urgent needs |
+| `ExplainDecision` | Operator-facing, graph-grounded rationale |
+| `DashboardState` | UI snapshot (nodes, edges, recommendations, timeline) |
 
 Runnable teaching demos (for judges): see [`jac/examples/`](jac/examples/).
 
@@ -120,17 +120,16 @@ Runnable teaching demos (for judges): see [`jac/examples/`](jac/examples/).
 - Python 3.12+
 - Docker (optional)
 
-### Jac examples (demo for judges)
+### Jac graph service
 
 ```bash
 cd lifeline/jac
-jac run examples/01_graph_creation.jac
-jac run examples/02_node_traversal.jac
-jac run examples/03_edge_creation.jac
-jac run examples/04_walker_execution.jac
-jac run examples/06_multi_walker_orchestration.jac
-# jac run examples/05_llm_entity_extraction.jac   # needs byllm keys
+jac check main.jac
+jac start main.jac --no-client --port 8001
 ```
+
+Public walker endpoints are available at `/walker/LoadScenario`,
+`/walker/IngestReport`, `/walker/DashboardState`, and `/walker/Health`.
 
 ### Backend bridge
 
@@ -138,7 +137,7 @@ jac run examples/06_multi_walker_orchestration.jac
 cd lifeline/backend
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
-uvicorn app.main:app --reload --port 8000
+JAC_API_URL=http://localhost:8001 uvicorn app.main:app --reload --port 8000
 ```
 
 ### Frontend
@@ -164,7 +163,7 @@ docker compose up --build
 
 ## Demo Flow
 
-1. Click **Earthquake** (seeds Jac scenario — once implemented).
+1. Click **Earthquake** to seed the Jac scenario.
 2. Ingest the conflicting bridge reports from the left feed.
 3. Watch React Flow highlight nodes as walkers traverse.
 4. Read recommendations + confidence + walker timeline on the right.
@@ -176,8 +175,6 @@ Full script: [`docs/demo-script.md`](docs/demo-script.md)
 
 ## Future Improvements
 
-- Complete walker bodies and scenario seeders
-- Wire `JacRuntime` to real jac spawn / persistent root
 - Live WebSocket stream of walker hops → React Flow pulses
 - Multi-incident map view + offline SMS ingest channel
 - Constraint solver inside `allocate_resources`

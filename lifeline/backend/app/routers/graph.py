@@ -13,7 +13,7 @@ def get_graph(incident_id: str | None = Query(default=None)) -> GraphResponse:
     nodes = [GraphNode(**n) for n in snap.get("nodes", [])]
     edges = [GraphEdge(**e) for e in snap.get("edges", [])]
     return GraphResponse(
+        incident_id=snap.get("incident_id", ""),
         nodes=nodes,
         edges=edges,
-        active_incident_id=snap.get("active_incident_id") or None,
     )

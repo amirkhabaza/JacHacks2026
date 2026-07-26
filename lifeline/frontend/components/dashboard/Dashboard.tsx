@@ -26,8 +26,9 @@ export function Dashboard() {
   const refresh = useCallback(async () => {
     const snap = await fetchDashboard();
     setData(snap);
-    // TODO: derive highlightNodeIds from latest timeline walker hops
-    setHighlightNodeIds(snap.timeline.map((e) => e.node_id || "").filter(Boolean));
+    setHighlightNodeIds(
+      Array.from(new Set(snap.recommendations.flatMap((r) => r.evidence_node_ids))),
+    );
   }, []);
 
   useEffect(() => {

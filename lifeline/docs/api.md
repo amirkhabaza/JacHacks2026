@@ -6,15 +6,15 @@ All mutating intelligence runs in Jac. These endpoints only validate I/O and spa
 
 ## `GET /health`
 
-Liveness for bridge + Jac + Mongo stubs.
+Liveness for the bridge, Jac service, and optional Mongo audit store.
 
 ```json
-{ "status": "ok", "jac": "stub", "mongo": "stub" }
+{ "status": "ok", "jac": "ready", "mongo": "disabled" }
 ```
 
 ## `POST /report`
 
-Ingest a raw crisis report → Jac `ingest_report` (+ pipeline).
+Ingest a raw crisis report → Jac `IngestReport` and the full walker pipeline.
 
 ```json
 {
@@ -27,25 +27,72 @@ Ingest a raw crisis report → Jac `ingest_report` (+ pipeline).
 
 ## `GET /graph`
 
-React Flow snapshot from `dashboard_state`.
+Graph snapshot from `DashboardState`.
 
 Query: `?incident_id=` (optional)
 
 ```json
 {
-  "nodes": [{ "id": "...", "label": "...", "kind": "Hospital", "status": "offline", "confidence": 0.0, "meta": {} }],
-  "edges": [{ "id": "...", "source": "...", "target": "...", "kind": "depends_on", "meta": {} }],
-  "active_incident_id": "..."
+  "incident_id": "incident-1",
+  "nodes": [
+    {
+      "id": "bridge-2",
+      "type": "Bridge",
+      "label": "Bridge Alpha",
+      "status": "collapsed",
+      "confidence": 1.0,
+      "metadata": { "location": "Bay District" }
+    }
+  ],
+  "edges": [
+    {
+      "id": "edge-18",
+      "source": "road-3",
+      "target": "bridge-2",
+      "type": "depends_on",
+      "status": "disrupted"
+    }
+  ]
 }
 ```
 
 ## `GET /recommendations`
 
-Allocations + explanation fields from dashboard projection.
+Graph-grounded response actions from `AllocateResources`.
+
+```json
+{
+  "recommendations": [
+    {
+      "id": "recommendation-28",
+      "title": "Reroute oxygen delivery",
+      "priority": "critical",
+      "confidence": 0.91,
+      "reason": "The shelter supply route is disrupted.",
+      "actions": ["Use the safe alternate route", "Dispatch 20 oxygen tanks"],
+      "evidence_node_ids": ["shelter-5", "resource-8"]
+    }
+  ]
+}
+```
 
 ## `GET /timeline`
 
 Walker execution events for the UI timeline.
+
+```json
+{
+  "events": [
+    {
+      "id": "event-24",
+      "walker": "verify_reports",
+      "status": "completed",
+      "timestamp": "2026-07-26T21:30:01Z",
+      "summary": "Detected a conflicting bridge report."
+    }
+  ]
+}
+```
 
 ## `POST /scenario`
 
@@ -57,4 +104,6 @@ Seed demo graph: `earthquake` | `wildfire` | `flood`.
 
 ## Errors
 
-Bridge returns FastAPI validation errors (422) for bad payloads. Jac failures should surface as `status: "error"` with `message` once `JacRuntime` is wired.
+FastAPI returns validation errors (422) for malformed payloads. Jac transport
+failures return `status: "error"` and a diagnostic `message` on mutation
+endpoints; read endpoints return an empty contract-safe snapshot.

@@ -25,9 +25,11 @@ export function Timeline({ events }: Props) {
           <ol className="relative space-y-3 border-l border-border pl-4">
             {events.map((e) => (
               <li key={e.id} className="text-xs">
-                <div className="font-medium text-primary">{e.walker}</div>
-                <div className="text-foreground/90">{e.message}</div>
-                <div className="text-muted-foreground">{e.at}</div>
+                <div className="font-medium text-primary">
+                  {e.walker} · {e.status}
+                </div>
+                <div className="text-foreground/90">{e.summary}</div>
+                <div className="text-muted-foreground">{e.timestamp}</div>
               </li>
             ))}
           </ol>

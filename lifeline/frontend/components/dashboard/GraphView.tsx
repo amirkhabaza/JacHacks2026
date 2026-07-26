@@ -45,9 +45,9 @@ function layoutNodes(nodes: GraphNodeDTO[], highlight: Set<string>): Node[] {
     return {
       id: n.id,
       position: { x: 40 + col * 180, y: 40 + row * 110 },
-      data: { label: `${n.kind}: ${n.label}` },
+      data: { label: `${n.type}: ${n.label}` },
       style: {
-        border: `1px solid ${KIND_COLOR[n.kind] ?? "#64748b"}`,
+        border: `1px solid ${KIND_COLOR[n.type] ?? "#64748b"}`,
         background: glow ? "rgba(245,158,11,0.25)" : "rgba(15,23,42,0.9)",
         color: "#e2e8f0",
         borderRadius: 8,
@@ -69,7 +69,7 @@ export function GraphView({ nodes, edges, highlightNodeIds = [] }: Props) {
         id: e.id,
         source: e.source,
         target: e.target,
-        label: e.kind,
+        label: e.type,
         markerEnd: { type: MarkerType.ArrowClosed },
         style: { stroke: "#64748b" },
         labelStyle: { fill: "#94a3b8", fontSize: 10 },

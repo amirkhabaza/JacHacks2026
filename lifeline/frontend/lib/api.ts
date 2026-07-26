@@ -17,27 +17,31 @@ async function api<T>(path: string, init?: RequestInit): Promise<T> {
   return res.json() as Promise<T>;
 }
 
-/** TODO: wire to GET /graph + /recommendations + /timeline (or single dashboard endpoint). */
 export async function fetchDashboard(incidentId?: string): Promise<DashboardPayload> {
   const q = incidentId ? `?incident_id=${encodeURIComponent(incidentId)}` : "";
   try {
     const [graph, recs, timeline] = await Promise.all([
-      api<{ nodes: DashboardPayload["nodes"]; edges: DashboardPayload["edges"]; active_incident_id?: string }>(
+      api<{ incident_id: string; nodes: DashboardPayload["nodes"]; edges: DashboardPayload["edges"] }>(
         `/graph${q}`,
       ),
-      api<{ recommendations: DashboardPayload["recommendations"]; confidence: DashboardPayload["confidence"]; explanation?: string }>(
+      api<{ recommendations: DashboardPayload["recommendations"] }>(
         `/recommendations${q}`,
       ),
       api<{ events: DashboardPayload["timeline"] }>(`/timeline${q}`),
     ]);
+    const overallConfidence =
+      recs.recommendations.length > 0
+        ? recs.recommendations.reduce((sum, item) => sum + item.confidence, 0) /
+          recs.recommendations.length
+        : 0;
     return {
       nodes: graph.nodes ?? [],
       edges: graph.edges ?? [],
       recommendations: recs.recommendations ?? [],
-      confidence: recs.confidence ?? {},
+      confidence: { overall: overallConfidence },
       timeline: timeline.events ?? [],
-      active_incident_id: graph.active_incident_id,
-      explanation: recs.explanation,
+      incident_id: graph.incident_id,
+      explanation: recs.recommendations[0]?.reason,
     };
   } catch {
     // Scaffold fallback so UI renders before Jac bridge is live
@@ -66,6 +70,7 @@ export function emptyDashboard(): DashboardPayload {
     recommendations: [],
     confidence: { overall: 0 },
     timeline: [],
+    incident_id: "",
     explanation: "Waiting for Jac dashboard_state walker…",
   };
 }
