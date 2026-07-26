@@ -1,0 +1,47 @@
+{
+  "abi": "jac_host1",
+  "imports": {
+    "env": [
+      "BeginDrawing",
+      "CloseWindow",
+      "DisableCursor",
+      "DrawFPS",
+      "EnableCursor",
+      "EndDrawing",
+      "EndMode3D",
+      "FileExists",
+      "GetFrameTime",
+      "GetMouseX",
+      "GetMouseY",
+      "GetTime",
+      "InitWindow",
+      "IsKeyDown",
+      "IsKeyPressed",
+      "IsMouseButtonPressed",
+      "LoadFileText",
+      "SaveFileText",
+      "TextToInteger",
+      "WindowShouldClose",
+      "rlBegin",
+      "rlClearColor",
+      "rlClearScreenBuffers",
+      "rlColor4ub",
+      "rlEnableDepthTest",
+      "rlEnd",
+      "rlFrustum",
+      "rlLoadIdentity",
+      "rlMatrixMode",
+      "rlOrtho",
+      "rlPopMatrix",
+      "rlPushMatrix",
+      "rlRotatef",
+      "rlSetLineWidth",
+      "rlTranslatef",
+      "rlVertex3f"
+    ],
+    "jac_host1": [
+      "abort",
+      "write"
+    ]
+  }
+}
