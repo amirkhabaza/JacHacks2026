@@ -1,17 +1,57 @@
 services:
-  mongodb:
+  mongo:
     image: mongo:7
-    container_name: lifeline-mongodb
     ports:
       - "27017:27017"
     volumes:
-      - lifeline_mongodb_data:/data/db
-    healthcheck:
-      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
+      - lifeline_mongo:/data/db
+
+  jac:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: backend
+    command: jac start /app/jac/main.jac --no-client --port 8001
+    environment:
+      JAC_ROOT: /app/jac
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./jac:/app/jac
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: backend
+    environment:
+      MONGODB_URI: mongodb://mongo:27017
+      MONGODB_DB: lifeline
+      JAC_ROOT: /app/jac
+      JAC_API_URL: http://jac:8001
+    ports:
+      - "8000:8000"
+    depends_on:
+      - mongo
+      - jac
+    volumes:
+      - ./jac:/app/jac
+      - ./backend:/app/backend
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: frontend
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
 
 volumes:
-  lifeline_mongodb_data:
+  lifeline_mongo:

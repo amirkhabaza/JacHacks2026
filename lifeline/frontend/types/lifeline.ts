@@ -1,34 +1,36 @@
 export type GraphNodeDTO = {
   id: string;
+  type: string;
   label: string;
-  kind: string;
   status?: string;
   confidence?: number;
-  meta?: Record<string, unknown>;
+  metadata?: Record<string, unknown>;
 };
 
 export type GraphEdgeDTO = {
   id: string;
   source: string;
   target: string;
-  kind: string;
-  meta?: Record<string, unknown>;
+  type: string;
+  status: string;
 };
 
 export type TimelineEventDTO = {
   id: string;
   walker: string;
-  message: string;
-  node_id?: string;
-  at?: string;
+  status: "running" | "completed" | "failed";
+  timestamp: string;
+  summary: string;
 };
 
 export type RecommendationDTO = {
-  id?: string;
+  id: string;
   title: string;
-  detail?: string;
-  priority?: number;
-  confidence?: number;
+  priority: "critical" | "high" | "medium" | "low";
+  confidence: number;
+  reason: string;
+  actions: string[];
+  evidence_node_ids: string[];
 };
 
 export type DashboardPayload = {
@@ -37,7 +39,7 @@ export type DashboardPayload = {
   recommendations: RecommendationDTO[];
   confidence: Record<string, number>;
   timeline: TimelineEventDTO[];
-  active_incident_id?: string | null;
+  incident_id?: string;
   explanation?: string;
 };
 

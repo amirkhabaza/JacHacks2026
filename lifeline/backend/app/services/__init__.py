@@ -1,1 +1,1 @@
-"""Infrastructure service adapters (MongoDB, Jac bridge)."""
+"""Service package — Jac bridge + Mongo mirror."""
