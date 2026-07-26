@@ -149,7 +149,7 @@ npm install
 npm run dev
 ```
 
-Open http://localhost:3000
+Open http://localhost:3000/app (the ops dashboard) — http://localhost:3000 is the landing page.
 
 ### Docker Compose
 
