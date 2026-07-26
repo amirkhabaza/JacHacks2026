@@ -172,6 +172,21 @@ export function Dashboard() {
     [bridge.status, refreshLive, stopAutoplay, updateDemo],
   );
 
+  // Deep-link from the landing page: /app?scenario=earthquake selects that
+  // scenario on load, so "Run this scenario live" lands on the exact story the
+  // marketing copy just described rather than a blank canvas. Read directly off
+  // the URL (not useSearchParams) so this page can stay statically rendered.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const requested = new URLSearchParams(window.location.search).get("scenario");
+    if (requested === "earthquake" || requested === "wildfire" || requested === "flood") {
+      void onScenario(requested);
+    }
+    // Intentionally mount-only: re-running this on every onScenario identity
+    // change (e.g. once the bridge probe resolves) would re-seed the scenario.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const onIngest = useCallback(
     async (report: IncomingReport) => {
       setBusy(true);
