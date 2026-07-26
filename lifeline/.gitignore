@@ -1,17 +1,52 @@
 # Lifeline
+
 .env
+.env.local
+.env.*.local
+
+# Python
 .venv/
 venv/
+env/
 __pycache__/
 *.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+dist/
+build/
 .pytest_cache/
 .mypy_cache/
-.jac/
+.ruff_cache/
+.coverage
+htmlcov/
+coverage/
+
+# Node / Next.js
 node_modules/
 .next/
 out/
-dist/
-*.log
-.DS_Store
-coverage/
 .turbo/
+*.tsbuildinfo
+
+# IDE / OS
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# MongoDB local data
+data/db/
+mongo-data/
+lifeline_mongodb_data/
+
+# Jac generated runtime files
+.jac/
+**/.jac/
+*.jir
