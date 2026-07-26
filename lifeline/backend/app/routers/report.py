@@ -16,7 +16,17 @@ def post_report(body: ReportIn) -> ReportOut:
         source_kind=body.source_kind,
         channel=body.channel,
     )
-    mongo_store.append_event({"type": "report_ingested", "payload": body.model_dump()})
+    mongo_store.append_event(
+        {
+            "type": "report_ingested",
+            "status": result.get("status", "error"),
+            "payload": body.model_dump(),
+        }
+    )
+    if result.get("status") != "error":
+        mongo_store.save_snapshot(
+            jac_runtime.get_dashboard(result.get("incident_id"))
+        )
     return ReportOut(
         status=result.get("status", "error"),
         report_id=result.get("report_id"),

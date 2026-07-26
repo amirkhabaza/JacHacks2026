@@ -193,7 +193,7 @@ const earthquake: MockScenario = {
       received_at: "T+00:06",
       status: "pending",
       verdict: "unscored",
-      text: "Main St Bridge structural failure detected. Both spans impassable. Debris field expanding.",
+      text: "Bridge Alpha structural failure detected. Both spans impassable. Debris field expanding.",
       fragment: {
         nodes: [
           n("src-sensor", "Source", "field-sensor-07", "operational", {
@@ -228,7 +228,7 @@ const earthquake: MockScenario = {
       received_at: "T+00:09",
       status: "pending",
       verdict: "unscored",
-      text: "Just drove over Main St Bridge — it's open, traffic is normal.",
+      text: "Just drove over Bridge Alpha — it's open, traffic is normal.",
       fragment: {
         nodes: [
           n("src-anon", "Source", "anonymous", "unknown", {
@@ -264,7 +264,7 @@ const earthquake: MockScenario = {
       received_at: "T+00:11",
       status: "pending",
       verdict: "unscored",
-      text: "Bay Clinic lost grid power. Life support on limited UPS. Requesting portable generator. River Shelter needs medical oxygen ASAP.",
+      text: "Hospital West lost grid power. Life support on limited UPS. Requesting portable generator. Harbor Shelter needs medical oxygen ASAP.",
       fragment: {
         nodes: [
           n("src-clinic", "Source", "clinic-ops", "operational", {

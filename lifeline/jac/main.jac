@@ -231,11 +231,27 @@ def source_reliability(kind: str) -> float {
     return 0.30;
 }
 
+def normalize_claim_state(claim_state: str) -> str {
+    lowered = claim_state.lower().strip();
+    if lowered in ["collapsed", "impassable", "destroyed", "failed", "down"] {
+        return "collapsed";
+    } elif lowered in ["closed", "blocked", "washed_out", "washed out"] {
+        return "closed";
+    } elif lowered in ["open", "clear", "passable", "normal", "safe"] {
+        return "open";
+    } elif lowered in ["power_lost", "no_power", "unpowered", "blackout", "lost power", "lost_power"] {
+        return "power_lost";
+    } elif lowered in ["needed", "shortage", "required", "urgent"] {
+        return "needed";
+    }
+    return lowered if lowered != "" else "unknown";
+}
+
 def infer_subject(text: str) -> str {
     lowered = text.lower();
     if "bridge" in lowered {
         return "bridge";
-    } elif "hospital" in lowered {
+    } elif "hospital" in lowered or "clinic" in lowered {
         return "hospital";
     } elif "shelter" in lowered {
         return "shelter";
@@ -249,18 +265,91 @@ def infer_subject(text: str) -> str {
 
 def infer_state(text: str) -> str {
     lowered = text.lower();
-    if "collapsed" in lowered or "destroyed" in lowered {
+    if (
+        "collapsed" in lowered
+        or "destroyed" in lowered
+        or "impassable" in lowered
+        or "structural failure" in lowered
+    ) {
         return "collapsed";
-    } elif "closed" in lowered or "blocked" in lowered {
+    } elif "closed" in lowered or "blocked" in lowered or "washed out" in lowered {
         return "closed";
-    } elif "open" in lowered or "safe" in lowered {
-        return "open";
-    } elif "lost power" in lowered or "no power" in lowered {
+    } elif (
+        "lost power" in lowered
+        or "no power" in lowered
+        or "grid power" in lowered
+        or "ups" in lowered
+    ) {
         return "power_lost";
+    } elif "oxygen" in lowered and ("need" in lowered or "short" in lowered or "asap" in lowered) {
+        return "needed";
+    } elif "open" in lowered or "safe" in lowered or "normal" in lowered {
+        return "open";
     } elif "low" in lowered or "needs" in lowered or "need" in lowered {
         return "needed";
     }
     return "unknown";
+}
+
+def apply_report_effects(
+    incident: Incident,
+    raw_text: str,
+    subject: str,
+    claim_state: str,
+    source_kind: str,
+    report_id: str
+) -> list[str] {
+    lowered = raw_text.lower();
+    trust = source_reliability(source_kind);
+    effects: list[str] = [];
+    bridges = [incident -->][?:Bridge];
+    hospitals = [incident -->][?:Hospital];
+    shelters = [incident -->][?:Shelter];
+
+    bridge_claim = subject == "bridge" or "bridge" in lowered;
+    if bridge_claim and claim_state in ["collapsed", "closed"] and trust >= 0.70 {
+        for bridge in bridges {
+            if bridge.status != "collapsed" {
+                bridge.status = "collapsed";
+                effects.append(f"Marked {bridge.name} collapsed from report {report_id}");
+            }
+        }
+    } elif bridge_claim and claim_state == "open" and trust >= 0.70 {
+        for bridge in bridges {
+            if bridge.status != "collapsed" {
+                bridge.status = "open";
+                effects.append(f"Marked {bridge.name} open from report {report_id}");
+            }
+        }
+    }
+
+    power_claim = (
+        claim_state == "power_lost"
+        or "power" in lowered
+        or "ups" in lowered
+        or "generator" in lowered
+    );
+    if power_claim and (subject == "hospital" or "hospital" in lowered or "clinic" in lowered) {
+        if trust >= 0.55 {
+            for hospital in hospitals {
+                if hospital.has_power {
+                    hospital.has_power = False;
+                    effects.append(f"Marked {hospital.name} without grid power from report {report_id}");
+                }
+            }
+        }
+    }
+
+    oxygen_claim = "oxygen" in lowered and (
+        claim_state == "needed" or "need" in lowered or "short" in lowered or "asap" in lowered
+    );
+    if oxygen_claim and trust >= 0.55 {
+        for shelter in shelters {
+            shelter.operational = False;
+            effects.append(f"Flagged {shelter.name} oxygen shortfall from report {report_id}");
+        }
+    }
+    return effects;
 }
 
 # ---------------------------------------------------------------------------
@@ -297,7 +386,7 @@ walker:pub LoadScenario {
             id=next_id(state, "bridge"),
             incident_id=incident_id,
             name="Bridge Alpha",
-            status="collapsed",
+            status="open",
             location="Bay District"
         );
         incident +>:Contains(relation="infrastructure"):+> bridge;
@@ -383,21 +472,22 @@ walker:pub LoadScenario {
         project_edge(state, incident.id, generator.id, "contains");
         project_edge(state, incident.id, oxygen.id, "contains");
         project_edge(state, incident.id, ambulance.id, "contains");
-        project_edge(state, road.id, bridge.id, "depends_on", "disrupted");
-        project_edge(state, hospital.id, road.id, "depends_on", "disrupted");
-        project_edge(state, shelter.id, hospital.id, "depends_on", "disrupted");
+        project_edge(state, road.id, bridge.id, "depends_on", "active");
+        project_edge(state, hospital.id, road.id, "depends_on", "active");
+        project_edge(state, shelter.id, hospital.id, "depends_on", "active");
         project_edge(state, shelter.id, oxygen.id, "requires", "open");
         project_edge(state, hospital.id, generator.id, "requires", "open");
         project_edge(state, bridge.id, citizens.id, "affects", "active");
+        state.explanation = (
+            "Scenario seeded with an unverified graph. Ingest field reports to "
+            "confirm failures and build the response plan."
+        );
         add_event(state, "load_scenario", f"Seeded {self.name} crisis graph");
-
-        root spawn PropagateFailures(incident_id=incident_id);
-        root spawn AllocateResources(incident_id=incident_id);
         report {
             "status": "ok",
             "name": self.name,
             "incident_id": incident_id,
-            "message": "Scenario graph seeded and walkers executed"
+            "message": "Scenario graph seeded — ingest reports to build the response plan"
         };
     }
 }
@@ -449,6 +539,7 @@ walker:pub IngestReport {
                 );
             }
         }
+        claim_state = normalize_claim_state(claim_state);
 
         source = Source(
             id=next_id(state, "source"),
@@ -473,6 +564,18 @@ walker:pub IngestReport {
         project_edge(state, incident.id, source.id, "contains");
         project_edge(state, incident.id, report_node.id, "reports");
         add_event(state, "ingest_report", f"Created Report and Source nodes for {subject}: {claim_state}");
+
+        effects = apply_report_effects(
+            incident,
+            self.raw_text,
+            subject,
+            claim_state,
+            self.source_kind,
+            report_node.id
+        );
+        for effect in effects {
+            add_event(state, "ingest_report", effect);
+        }
 
         root spawn VerifyReports(incident_id=incident_id);
         root spawn PropagateFailures(incident_id=incident_id);
@@ -628,11 +731,66 @@ walker AllocateResources {
         vehicles = [incident -->][?:Vehicle];
         hospitals = [incident -->][?:Hospital];
         shelters = [incident -->][?:Shelter];
+        bridges = [incident -->][?:Bridge];
+        reports = [incident -->][?:Report];
+
+        contradictory_ids = [
+            report.id for report in reports if report.verification_status == "contradictory"
+        ];
+        open_bridge_claims = [
+            report for report in reports
+            if report.subject == "bridge" and report.claim_state == "open"
+        ];
+        collapsed_bridge = any([b.status == "collapsed" or b.status == "closed" for b in bridges]);
+
+        if collapsed_bridge and len(bridges) > 0 {
+            bridge = bridges[0];
+            evidence = [bridge.id] + contradictory_ids;
+            recommendation = {
+                "id": next_id(state, "recommendation"),
+                "title": f"Reroute around {bridge.name}",
+                "priority": "critical",
+                "confidence": 0.94,
+                "reason": f"{bridge.name} is collapsed; keep all convoys on the alternate west-side route.",
+                "actions": [
+                    f"Close {bridge.name} in the routing graph",
+                    "Use Harbor west bypass for hospital and shelter logistics",
+                    "Brief drivers that Bridge Alpha is impassable"
+                ],
+                "evidence_node_ids": evidence
+            };
+            state.recommendations.append(recommendation);
+            add_event(state, "allocate_resources", f"Added reroute plan around {bridge.name}");
+        }
+
+        if len(open_bridge_claims) > 0 and collapsed_bridge {
+            claim = open_bridge_claims[0];
+            recommendation = {
+                "id": next_id(state, "recommendation"),
+                "title": "Reject unverified open-bridge claim",
+                "priority": "high",
+                "confidence": 0.90,
+                "reason": (
+                    "An open-bridge claim conflicts with the verified collapse state. "
+                    "Do not reverse the reroute."
+                ),
+                "actions": [
+                    "Keep Bridge Alpha marked impassable",
+                    "Flag the conflicting report as rejected for routing",
+                    "Prefer sensor and government sources over anonymous traffic claims"
+                ],
+                "evidence_node_ids": [claim.id] + [b.id for b in bridges]
+            };
+            state.recommendations.append(recommendation);
+            add_event(state, "allocate_resources", "Added conflict-handling recommendation");
+        }
 
         for hospital in hospitals {
-            if not hospital.operational or not hospital.has_power {
+            needs_power = not hospital.has_power;
+            needs_access = not hospital.operational;
+            if needs_power or needs_access {
                 generators = [resource for resource in resources if resource.kind == "generator"];
-                if len(generators) > 0 {
+                if needs_power and len(generators) > 0 {
                     generator = generators[0];
                     was_available = generator.status == "available";
                     if was_available {
@@ -642,13 +800,14 @@ walker AllocateResources {
                             priority=1.0,
                             rationale="Restore critical hospital operations"
                         ):+> hospital;
+                        project_edge(state, generator.id, hospital.id, "assigned_to", "assigned");
                     }
                     recommendation = {
                         "id": next_id(state, "recommendation"),
-                        "title": "Restore Hospital West power",
+                        "title": f"Restore {hospital.name} power",
                         "priority": "critical",
                         "confidence": 0.96,
-                        "reason": "Hospital West is inaccessible and requires backup power.",
+                        "reason": f"{hospital.name} lost grid power and needs backup generation.",
                         "actions": [
                             f"Dispatch {generator.name}",
                             "Use the safe alternate route",
@@ -657,13 +816,10 @@ walker AllocateResources {
                         "evidence_node_ids": [hospital.id, generator.id]
                     };
                     state.recommendations.append(recommendation);
-                    if was_available {
-                        project_edge(state, generator.id, hospital.id, "assigned_to", "assigned");
-                    }
                     add_event(state, "allocate_resources", f"Assigned {generator.name} to {hospital.name}");
                 }
                 ambulances = [vehicle for vehicle in vehicles if vehicle.kind == "ambulance"];
-                if len(ambulances) > 0 {
+                if needs_access and len(ambulances) > 0 {
                     ambulance = ambulances[0];
                     was_available = ambulance.status == "available";
                     if was_available {
@@ -673,6 +829,7 @@ walker AllocateResources {
                             priority=0.98,
                             rationale="Stage medical transport near the disrupted hospital"
                         ):+> hospital;
+                        project_edge(state, ambulance.id, hospital.id, "assigned_to", "assigned");
                     }
                     recommendation = {
                         "id": next_id(state, "recommendation"),
@@ -683,14 +840,11 @@ walker AllocateResources {
                         "actions": [
                             f"Assign {ambulance.name}",
                             "Stage on the west-side alternate route",
-                            "Coordinate patient transfer with Hospital West"
+                            f"Coordinate patient transfer with {hospital.name}"
                         ],
                         "evidence_node_ids": [hospital.id, ambulance.id]
                     };
                     state.recommendations.append(recommendation);
-                    if was_available {
-                        project_edge(state, ambulance.id, hospital.id, "assigned_to", "assigned");
-                    }
                     add_event(state, "allocate_resources", f"Assigned {ambulance.name} to {hospital.name}");
                 }
             }
@@ -698,7 +852,11 @@ walker AllocateResources {
 
         for shelter in shelters {
             oxygen_supplies = [resource for resource in resources if resource.kind == "oxygen"];
-            if len(oxygen_supplies) > 0 {
+            needs_oxygen = not shelter.operational or any([
+                "oxygen" in report.raw_text.lower() and report.verification_status != "contradictory"
+                for report in reports
+            ]);
+            if needs_oxygen and len(oxygen_supplies) > 0 {
                 oxygen = oxygen_supplies[0];
                 was_available = oxygen.status == "available";
                 if was_available {
@@ -708,13 +866,14 @@ walker AllocateResources {
                         priority=0.95,
                         rationale="Meet urgent shelter oxygen requirement"
                     ):+> shelter;
+                    project_edge(state, oxygen.id, shelter.id, "assigned_to", "assigned");
                 }
                 recommendation = {
                     "id": next_id(state, "recommendation"),
                     "title": "Reroute oxygen delivery",
                     "priority": "critical",
                     "confidence": 0.91,
-                    "reason": "The shelter supply route is disrupted and 200 residents need oxygen.",
+                    "reason": f"{shelter.name} has an oxygen shortfall and needs resupply.",
                     "actions": [
                         "Use the safe alternate route",
                         f"Dispatch 20 tanks from {oxygen.name}",
@@ -723,11 +882,26 @@ walker AllocateResources {
                     "evidence_node_ids": [shelter.id, oxygen.id]
                 };
                 state.recommendations.append(recommendation);
-                if was_available {
-                    project_edge(state, oxygen.id, shelter.id, "assigned_to", "assigned");
-                }
                 add_event(state, "allocate_resources", f"Assigned oxygen to {shelter.name}");
             }
+        }
+
+        if len(state.recommendations) == 0 {
+            recommendation = {
+                "id": next_id(state, "recommendation"),
+                "title": "Hold dispatch pending verified needs",
+                "priority": "medium",
+                "confidence": 0.55,
+                "reason": "No verified infrastructure or supply failures yet.",
+                "actions": [
+                    "Continue monitoring the incoming report feed",
+                    "Prioritize sensor and government channels",
+                    "Do not commit scarce assets until claims are verified"
+                ],
+                "evidence_node_ids": [incident.id]
+            };
+            state.recommendations.append(recommendation);
+            add_event(state, "allocate_resources", "No actionable failures yet — holding dispatch");
         }
     }
 }
@@ -740,11 +914,24 @@ walker ExplainDecision {
         if len(state.recommendations) == 0 {
             state.explanation = "No safe allocation is currently available; request mutual aid.";
         } else {
-            state.explanation = (
-                "Graph traversal found a collapsed bridge, propagated access loss "
-                "to Hospital West and Harbor Shelter, then matched the highest-"
-                "urgency requirements with a generator, oxygen, and medical transport."
-            );
+            has_conflict_handling = False;
+            for rec in state.recommendations {
+                title = rec["title"];
+                if "Reject unverified" in title {
+                    has_conflict_handling = True;
+                }
+            }
+            if has_conflict_handling {
+                state.explanation = (
+                    "Verified collapse evidence outweighed a conflicting open-bridge claim. "
+                    "The response plan keeps Bridge Alpha closed and commits assets on the alternate route."
+                );
+            } else {
+                state.explanation = (
+                    "Latest verified reports updated the graph. Walkers propagated impact and "
+                    "rebuilt the response plan from current hospital, shelter, and routing needs."
+                );
+            }
         }
         add_event(state, "explain_decision", "Generated graph-grounded recommendation reasons");
     }
