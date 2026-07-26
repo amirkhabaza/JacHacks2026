@@ -1,0 +1,31 @@
+{
+  "name": "wildfire",
+  "title": "Ridge Line Wildfire",
+  "synopsis": "Fast-moving fire threatening evacuation corridors. Conflicting wind reports. Shelter capacity strain.",
+  "reports": [
+    {
+      "source_name": "fire-command",
+      "source_kind": "government",
+      "text": "Fire jumped containment near North Ridge. Recommend closing Ridge Road. Winds shifting south."
+    },
+    {
+      "source_name": "weather-bot",
+      "source_kind": "sensor",
+      "text": "Sustained winds remaining northerly at 12 mph. No southward shift detected."
+    },
+    {
+      "source_name": "shelter-lead",
+      "source_kind": "ngo",
+      "text": "Community Shelter at 90% capacity. Need N95 masks and water for incoming evacuees."
+    }
+  ],
+  "expected_nodes": [
+    "Incident:Ridge Line Wildfire",
+    "Road:Ridge Road",
+    "Shelter:Community Shelter",
+    "CitizenGroup:North Ridge Residents",
+    "Resource:N95 Masks",
+    "Resource:Water Pallets",
+    "Vehicle:Engine 2"
+  ]
+}

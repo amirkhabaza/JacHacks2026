@@ -1,0 +1,31 @@
+{
+  "name": "flood",
+  "title": "Riverbend Flood",
+  "synopsis": "River stage rising. Road washouts. Levee integrity disputed. Hospital access at risk.",
+  "reports": [
+    {
+      "source_name": "hydrology",
+      "source_kind": "sensor",
+      "text": "Riverbend gauge +2.1m in 3 hours. Farm Road 12 partially washed out."
+    },
+    {
+      "source_name": "county-radio",
+      "source_kind": "government",
+      "text": "Levee patrol reports seepage but structure holding. No breach."
+    },
+    {
+      "source_name": "resident-sms",
+      "source_kind": "citizen",
+      "text": "Water over the levee near mile marker 4. People trapped on porches."
+    }
+  ],
+  "expected_nodes": [
+    "Incident:Riverbend Flood",
+    "Road:Farm Road 12",
+    "Bridge:Mile 4 Overpass",
+    "Hospital:Riverbend General",
+    "CitizenGroup:Levee District Households",
+    "Vehicle:High-Clearance Rescue 1",
+    "Resource:Water Purification Kits"
+  ]
+}

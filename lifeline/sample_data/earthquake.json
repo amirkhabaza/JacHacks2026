@@ -1,0 +1,40 @@
+{
+  "name": "earthquake",
+  "title": "Bay District Quake",
+  "severity": "Magnitude ~6.4 aftershock cluster. Conflicting bridge status. Hospital power loss. Shelter oxygen shortfall.",
+  "reports": [
+    {
+      "source_name": "field-sensor-07",
+      "source_kind": "sensor",
+      "text": "Main St Bridge structural failure detected. Both spans impassable. Debris field expanding."
+    },
+    {
+      "source_name": "anonymous",
+      "source_kind": "anonymous",
+      "text": "Just drove over Main St Bridge — it's open, traffic is normal."
+    },
+    {
+      "source_name": "clinic-ops",
+      "source_kind": "government",
+      "text": "Bay Clinic lost grid power. Life support on limited UPS. Requesting portable generator. River Shelter needs medical oxygen ASAP."
+    }
+  ],
+  "expected_nodes": [
+    "Incident:Bay District Quake",
+    "Hospital:Bay Clinic",
+    "Bridge:Main St Bridge",
+    "Shelter:River Shelter",
+    "Resource:Portable Generator",
+    "Resource:Oxygen Cylinders",
+    "Vehicle:Ambulance Unit 4",
+    "SupplyDepot:Central Staging"
+  ],
+  "expected_conflicts": [
+    "Bridge open vs Bridge collapsed"
+  ],
+  "expected_allocations": [
+    "Generator -> Bay Clinic",
+    "Oxygen -> River Shelter",
+    "Ambulance Unit 4 -> Bay Clinic"
+  ]
+}

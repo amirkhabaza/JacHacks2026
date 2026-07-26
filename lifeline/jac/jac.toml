@@ -1,0 +1,18 @@
+[project]
+name = "lifeline"
+version = "0.1.0"
+description = "Lifeline — AI-powered humanitarian crisis intelligence on Jac's graph-native runtime"
+entry-point = "main.jac"
+
+# Optional: point at a local jaclang checkout during compiler development.
+# Comment out to use the installed jaclang package.
+# [dev]
+# jaclang_source = "../../jac"
+
+[jacpack]
+name = "lifeline"
+description = "Crisis intelligence graph: incidents, verification, cascade prediction, allocation"
+
+[dependencies.python]
+# Python is only used as a bridge (FastAPI <-> Jac). Keep this list minimal.
+# Runtime deps for the bridge live in ../backend/requirements.txt.

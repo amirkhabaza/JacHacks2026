@@ -1,0 +1,23 @@
+# Jac build / runtime artifacts
+.jac/
+**/.jac/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+
+# Node / Next
+node_modules/
+.next/
+out/
+dist/
+
+# Env / OS
+.env
+.env.local
+.DS_Store
+*.log

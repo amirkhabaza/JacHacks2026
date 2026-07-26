@@ -1,0 +1,17 @@
+# Lifeline
+.env
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.jac/
+node_modules/
+.next/
+out/
+dist/
+*.log
+.DS_Store
+coverage/
+.turbo/
