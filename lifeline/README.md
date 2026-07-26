@@ -42,7 +42,7 @@ lifeline/
 ├── backend/             # Thin FastAPI ↔ Jac bridge
 ├── docs/                # CHANGES, API, architecture, demo notes
 ├── sample_data/         # Disaster fixtures (later)
-├── .github/workflows/   # Placeholder (CI lives at repo root today)
+├── .github/workflows/   # Placeholder for later CI
 ├── README.md
 ├── .gitignore
 ├── .env.example

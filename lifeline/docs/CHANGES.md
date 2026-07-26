@@ -73,10 +73,6 @@ Replaced the earlier stub routers / models with a minimal bridge:
 - Architecture updated to describe **current checkpoint** vs **planned** Jac wiring
 - Main `README.md` focused on checkpoint-one run instructions
 
-### CI
-
-- Root workflow `.github/workflows/lifeline-ci.yml` compiles and tests the thin backend (no Jac runtime install required for checkpoint one)
-
 ## What did *not* change (intentionally)
 
 - No real Jac walker invocation
