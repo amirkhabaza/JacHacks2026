@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
@@ -30,39 +30,47 @@ class ReportOut(BaseModel):
 
 class GraphNode(BaseModel):
     id: str
+    type: str
     label: str
-    kind: str
     status: str = ""
-    confidence: float = 0.0
-    meta: dict[str, Any] = Field(default_factory=dict)
+    confidence: float = Field(default=0.0, ge=0.0, le=1.0)
+    metadata: dict[str, Any] = Field(default_factory=dict)
 
 
 class GraphEdge(BaseModel):
     id: str
     source: str
     target: str
-    kind: str
-    meta: dict[str, Any] = Field(default_factory=dict)
+    type: str
+    status: str
 
 
 class GraphResponse(BaseModel):
+    incident_id: str
     nodes: list[GraphNode] = Field(default_factory=list)
     edges: list[GraphEdge] = Field(default_factory=list)
-    active_incident_id: str | None = None
+
+
+class Recommendation(BaseModel):
+    id: str
+    title: str
+    priority: Literal["critical", "high", "medium", "low"]
+    confidence: float = Field(ge=0.0, le=1.0)
+    reason: str
+    actions: list[str] = Field(default_factory=list)
+    evidence_node_ids: list[str] = Field(default_factory=list)
 
 
 class RecommendationsResponse(BaseModel):
-    recommendations: list[dict[str, Any]] = Field(default_factory=list)
-    confidence: dict[str, Any] = Field(default_factory=dict)
-    explanation: str = ""
+    recommendations: list[Recommendation] = Field(default_factory=list)
 
 
 class TimelineEvent(BaseModel):
     id: str
     walker: str
-    message: str
-    node_id: str = ""
-    at: str = ""
+    status: Literal["running", "completed", "failed"]
+    timestamp: str
+    summary: str
 
 
 class TimelineResponse(BaseModel):

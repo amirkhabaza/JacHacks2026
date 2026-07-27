@@ -1,7 +1,8 @@
 # JacHacks2026
 
-**[Lifeline](./lifeline/)** — AI-powered humanitarian crisis intelligence built on Jac.
+**[Lifeline](./lifeline/)** — Jac-first humanitarian crisis intelligence.
 
-The graph is the application. Walkers are the intelligence.
+Start here:
 
-Start here: [lifeline/README.md](./lifeline/README.md)
+- [lifeline/README.md](./lifeline/README.md) — setup and run
+- [lifeline/docs/CHANGES.md](./lifeline/docs/CHANGES.md) — checkpoint-one changes

@@ -6,7 +6,34 @@
 
 Lifeline is intentionally *not* a Python monolith with Jac sprinkled in. Crisis domain logic — verification, cascade prediction, allocation, explanation — lives in Jac modules under `jac/`.
 
-## Layers
+## Checkpoint one (current)
+
+```text
+Client / curl
+    │
+    ▼
+FastAPI (backend/)     ← thin bridge only
+    ├── GET /          → Lifeline metadata
+    ├── GET /health    → MongoDB ping + mocked JacBridge
+    ├── MongoDBService → local MongoDB (audit later)
+    └── JacBridge      → mocked (real Jac runtime later)
+```
+
+Allowed in Python today:
+
+- Request / response models
+- Health and process wiring
+- MongoDB connectivity
+- Mocked Jac bridge façade
+
+Forbidden in Python (always):
+
+- NLP / entity extraction
+- Verification scoring
+- Allocation algorithms
+- Cascade simulation
+
+## Target layers (later milestones)
 
 ### 1. Jac graph engine (`jac/`)
 
@@ -19,39 +46,21 @@ Lifeline is intentionally *not* a Python monolith with Jac sprinkled in. Crisis 
 
 ### 2. HTTP bridge (`backend/`)
 
-FastAPI routers map 1:1 to Jac entrypoints via `JacRuntime`.
-
-Allowed responsibilities:
-
-- Request validation (Pydantic)
-- Calling Jac walkers
-- Optional MongoDB audit mirroring
-- CORS / health
-
-Forbidden:
-
-- NLP / entity extraction
-- Verification scoring
-- Allocation algorithms
-- Cascade simulation
+FastAPI routes will map 1:1 to Jac walkers via `JacBridge.execute_walker(...)`.
 
 ### 3. Dashboard (`frontend/`)
 
-Next.js App Router, dark ops UI, three columns:
-
-1. Incoming reports (ingest actions)
-2. React Flow live graph
-3. Recommendations, confidence, walker timeline
+Next.js App Router ops UI (scaffold present; not part of checkpoint one).
 
 ### 4. MongoDB
 
-Optional. Stores event log + snapshots for replay. **Not** the source of truth.
+Supporting store for event log + snapshots. **Not** the source of truth.
 
-## Data flow
+## Planned data flow
 
 ```text
 POST /report
-  → JacRuntime.ingest_report()
+  → JacBridge.execute_walker("ingest_report", ...)
     → ingest_report walker
       → extract_entities by llm()
       → create nodes/edges
@@ -70,3 +79,5 @@ POST /report
 - Every object is a node; every relationship an edge
 - `jac/examples` prove capabilities independently during judging
 - Frontend visualizes traversal, not a CRUD table
+
+See also: [CHANGES.md](./CHANGES.md) · [api-contract.md](./api-contract.md)

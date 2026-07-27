@@ -13,7 +13,7 @@ cd lifeline/backend && uvicorn app.main:app --port 8000
 cd lifeline/frontend && npm run dev
 ```
 
-Open http://localhost:3000
+Open http://localhost:3000/app (the ops dashboard the rest of this script drives — the marketing landing page is at http://localhost:3000).
 
 ## Narrative
 
