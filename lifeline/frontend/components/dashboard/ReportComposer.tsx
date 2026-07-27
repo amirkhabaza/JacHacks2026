@@ -7,6 +7,12 @@
  * Jac `ingest_report` walker calls `extract_entities by llm()`, and nodes appear.
  * No parsing happens here — the whole point is that the text is handed over
  * untouched.
+ *
+ * Collapsed by default: the feed below is read far more often than a report is
+ * typed, so a full-height form sitting open at all times was the single
+ * biggest thing crowding the left column. It expands on demand and folds back
+ * up after a successful submit; an error keeps it open so the message stays
+ * next to the field that caused it.
  */
 
 import { useState } from "react";
@@ -33,10 +39,12 @@ type Props = {
 };
 
 export function ReportComposer({ onSubmit, busy, error }: Props) {
+  const [expanded, setExpanded] = useState(false);
   const [text, setText] = useState("");
   const [sourceName, setSourceName] = useState("ops-console");
   const [sourceKind, setSourceKind] = useState<SourceKind>("government");
 
+  const open = expanded || Boolean(error);
   const canSubmit = text.trim().length > 0 && !busy;
 
   async function handleSubmit(event: React.FormEvent) {
@@ -44,16 +52,42 @@ export function ReportComposer({ onSubmit, busy, error }: Props) {
     if (!canSubmit) return;
     await onSubmit(text.trim(), sourceName.trim() || "anonymous", sourceKind);
     setText("");
+    setExpanded(false);
+  }
+
+  if (!open) {
+    return (
+      <Card className="shrink-0">
+        <button
+          type="button"
+          onClick={() => setExpanded(true)}
+          className="flex w-full items-center justify-between gap-2 px-4 py-3 text-left transition-colors hover:bg-accent/40"
+        >
+          <span className="text-sm font-medium text-foreground">+ Submit a report</span>
+          <span className="font-mono text-[10px] text-muted-foreground">ingest_report</span>
+        </button>
+      </Card>
+    );
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Submit a report</CardTitle>
-        <p className="text-xs text-muted-foreground">
-          Raw text → <span className="font-mono text-[11px]">ingest_report</span> →{" "}
-          <span className="font-mono text-[11px]">extract_entities by llm()</span>
-        </p>
+    <Card className="shrink-0">
+      <CardHeader className="flex-row items-start justify-between gap-2">
+        <div>
+          <CardTitle>Submit a report</CardTitle>
+          <p className="text-xs text-muted-foreground">
+            Raw text → <span className="font-mono text-[11px]">ingest_report</span> →{" "}
+            <span className="font-mono text-[11px]">extract_entities by llm()</span>
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => setExpanded(false)}
+          aria-label="Collapse composer"
+          className="shrink-0 rounded p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+        >
+          <span aria-hidden>✕</span>
+        </button>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-2.5">
@@ -63,6 +97,7 @@ export function ReportComposer({ onSubmit, busy, error }: Props) {
               value={text}
               onChange={(event) => setText(event.target.value)}
               rows={3}
+              autoFocus
               placeholder="Bridge Alpha collapsed. Hospital West has 30 minutes of generator fuel."
               className="w-full resize-y rounded-md border border-border bg-background/60 px-2.5 py-2 text-sm text-foreground placeholder:text-muted-foreground/60 focus:border-primary/60 focus:outline-none focus:ring-1 focus:ring-primary/40"
             />

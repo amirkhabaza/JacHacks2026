@@ -4,10 +4,13 @@
  * Confidence panel.
  *
  * `overall` is pulled out as a hero figure — it is the one number a commander
- * checks before acting, and a single number is not a chart. The remaining
- * components render as magnitude meters, each with its own verdict chip so the
- * reading never rests on the bar's colour.
+ * checks before acting, and a single number is not a chart. The component
+ * meters are real sub-scores rolled into that number, but they're detail, not
+ * headline: collapsed behind a toggle by default so the card reads as one
+ * number plus a verdict, not a wall of five bars.
  */
+
+import { useState } from "react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Meter } from "@/components/ui/meter";
@@ -31,6 +34,7 @@ function labelFor(key: string): string {
 }
 
 export function ConfidenceCard({ confidence }: Props) {
+  const [expanded, setExpanded] = useState(false);
   const entries = Object.entries(confidence).filter(([, value]) => typeof value === "number");
   const overall = confidence.overall;
   const components = entries.filter(([key]) => key !== "overall");
@@ -88,11 +92,28 @@ export function ConfidenceCard({ confidence }: Props) {
             ) : null}
 
             {components.length > 0 ? (
-              <div className="space-y-2 border-t border-border/60 pt-2.5">
-                {components.map(([key, value]) => (
-                  <Meter key={key} value={value} label={labelFor(key)} compact />
-                ))}
-              </div>
+              expanded ? (
+                <div className="space-y-2 border-t border-border/60 pt-2.5">
+                  {components.map(([key, value]) => (
+                    <Meter key={key} value={value} label={labelFor(key)} compact />
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => setExpanded(false)}
+                    className="text-[10px] text-primary/80 hover:text-primary"
+                  >
+                    Hide breakdown
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setExpanded(true)}
+                  className="text-[10px] text-primary/80 hover:text-primary"
+                >
+                  Show breakdown ({components.length}) →
+                </button>
+              )
             ) : null}
           </>
         )}

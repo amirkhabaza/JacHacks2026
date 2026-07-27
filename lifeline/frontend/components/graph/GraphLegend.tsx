@@ -11,7 +11,8 @@
  * colour underneath it means.
  */
 
-import { EDGES, KINDS, severityToken, VIZ } from "@/lib/graph-theme";
+import { Icon } from "@/components/ui/icon";
+import { EDGES, KINDS, severityToken } from "@/lib/graph-theme";
 import type { EdgeKind, NodeKind, Severity } from "@/types/lifeline";
 
 const SEVERITY_ORDER: Severity[] = ["good", "warning", "serious", "critical"];
@@ -73,7 +74,7 @@ export function GraphLegend() {
 
       <details className="group">
         <summary className="cursor-pointer list-none text-[10px] uppercase tracking-wider text-muted-foreground/80 hover:text-foreground">
-          Node shapes
+          Node icons
           <span aria-hidden className="ml-1 inline-block transition-transform group-open:rotate-90">
             ▶
           </span>
@@ -81,12 +82,8 @@ export function GraphLegend() {
         <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1.5">
           {(Object.keys(KINDS) as NodeKind[]).map((kind) => (
             <span key={kind} className="inline-flex items-center gap-1.5 whitespace-nowrap">
-              <span
-                aria-hidden
-                className="text-[11px] leading-none"
-                style={{ color: VIZ.textSecondary }}
-              >
-                {KINDS[kind].glyph}
+              <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-muted/70">
+                <Icon name={kind} className="h-2.5 w-2.5" />
               </span>
               <span className="text-[10px] text-muted-foreground">{KINDS[kind].label}</span>
             </span>
