@@ -9,9 +9,10 @@
  */
 
 import { Badge } from "@/components/ui/badge";
+import { Icon } from "@/components/ui/icon";
 import { Meter } from "@/components/ui/meter";
 import { StatusChip } from "@/components/ui/status-chip";
-import { edgeSpec, kindSpec } from "@/lib/graph-theme";
+import { edgeSpec, kindSpec, statusToken } from "@/lib/graph-theme";
 import type { GraphEdgeDTO, GraphNodeDTO } from "@/types/lifeline";
 
 type Props = {
@@ -26,6 +27,7 @@ export function NodeInspector({ node, nodes, edges, onClose, onSelectNode }: Pro
   if (!node) return null;
 
   const spec = kindSpec(node.type);
+  const severityColor = statusToken(node.status).color;
   const labelById = new Map(nodes.map((n) => [n.id, n.label]));
 
   const outgoing = edges.filter((edge) => edge.source === node.id);
@@ -39,17 +41,21 @@ export function NodeInspector({ node, nodes, edges, onClose, onSelectNode }: Pro
     // Anchored below the card header and capped short of the bottom, so the panel
     // floats over the canvas without covering the legend.
     <aside className="pointer-events-auto absolute left-3 top-[4.75rem] z-20 flex max-h-[calc(100%-11rem)] w-[19rem] max-w-[calc(100%-1.5rem)] flex-col overflow-hidden rounded-lg border border-border bg-card/95 shadow-xl backdrop-blur">
-      <header className="flex shrink-0 items-start justify-between gap-2 border-b border-border/70 px-3 py-2.5">
-        <div className="min-w-0">
-          <div className="flex items-center gap-1.5">
-            <span aria-hidden className="text-xs text-muted-foreground">
-              {spec.glyph}
-            </span>
+      <header className="flex shrink-0 items-start justify-between gap-2.5 border-b border-border/70 px-3 py-2.5">
+        <div className="flex min-w-0 items-start gap-2.5">
+          <span
+            aria-hidden
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full"
+            style={{ background: `${severityColor}26`, border: `1.5px solid ${severityColor}66` }}
+          >
+            <Icon name={node.type} className="h-4 w-4" />
+          </span>
+          <div className="min-w-0">
             <span className="text-[10px] uppercase tracking-wider text-muted-foreground/80">
               {spec.label}
             </span>
+            <h3 className="truncate text-sm font-semibold text-foreground">{node.label}</h3>
           </div>
-          <h3 className="truncate text-sm font-semibold text-foreground">{node.label}</h3>
         </div>
         <button
           type="button"

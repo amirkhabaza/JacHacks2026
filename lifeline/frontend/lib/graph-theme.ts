@@ -180,45 +180,41 @@ export function severityToken(severity: Severity): StatusToken {
 /* -------------------------------------------------------------- node kinds */
 
 export type KindSpec = {
-  /** Cytoscape shape — the primary identity channel. */
-  shape: string;
-  /** Short glyph used in panels and the legend where a canvas shape can't go. */
-  glyph: string;
   /** Semantic grouping, used to organise the legend. */
   layer: "Incident" | "Evidence" | "Facility" | "Infrastructure" | "Response" | "People";
   label: string;
 };
 
+/**
+ * Node identity is carried by a literal pictogram (see `lib/icons.ts`) plus the
+ * always-visible label — not by a zoo of abstract Cytoscape polygon shapes.
+ * Every node renders as a uniform circle; the icon and colour do the work of
+ * telling kinds apart, which reads calmer at a glance than eleven different
+ * silhouettes competing for attention.
+ */
 export const KINDS: Record<NodeKind, KindSpec> = {
-  Incident: { shape: "star", glyph: "★", layer: "Incident", label: "Incident" },
+  Incident: { layer: "Incident", label: "Incident" },
 
-  Report: { shape: "round-rectangle", glyph: "▭", layer: "Evidence", label: "Report" },
-  Source: { shape: "tag", glyph: "⌦", layer: "Evidence", label: "Source" },
+  Report: { layer: "Evidence", label: "Report" },
+  Source: { layer: "Evidence", label: "Source" },
 
-  Hospital: { shape: "hexagon", glyph: "⬡", layer: "Facility", label: "Hospital" },
-  Shelter: { shape: "pentagon", glyph: "⬠", layer: "Facility", label: "Shelter" },
-  SupplyDepot: { shape: "barrel", glyph: "⛁", layer: "Facility", label: "Supply depot" },
+  Hospital: { layer: "Facility", label: "Hospital" },
+  Shelter: { layer: "Facility", label: "Shelter" },
+  SupplyDepot: { layer: "Facility", label: "Supply depot" },
 
-  Bridge: { shape: "rectangle", glyph: "▬", layer: "Infrastructure", label: "Bridge" },
-  Road: { shape: "cut-rectangle", glyph: "▤", layer: "Infrastructure", label: "Road" },
+  Bridge: { layer: "Infrastructure", label: "Bridge" },
+  Road: { layer: "Infrastructure", label: "Road" },
 
-  Vehicle: { shape: "triangle", glyph: "▲", layer: "Response", label: "Vehicle" },
-  Resource: { shape: "diamond", glyph: "◆", layer: "Response", label: "Resource" },
+  Vehicle: { layer: "Response", label: "Vehicle" },
+  Resource: { layer: "Response", label: "Resource" },
 
-  CitizenGroup: { shape: "octagon", glyph: "⬢", layer: "People", label: "Citizen group" },
+  CitizenGroup: { layer: "People", label: "Citizen group" },
 };
 
-/** Look up a node's visual spec by its `type` field. Unknown types get a plain circle. */
+/** Look up a node's visual spec by its `type` field. Unknown types get a generic label. */
 export function kindSpec(type?: string): KindSpec {
-  if (!type) return { shape: "ellipse", glyph: "○", layer: "Evidence", label: "Node" };
-  return (
-    KINDS[type as NodeKind] ?? {
-      shape: "ellipse",
-      glyph: "○",
-      layer: "Evidence",
-      label: type,
-    }
-  );
+  if (!type) return { layer: "Evidence", label: "Node" };
+  return KINDS[type as NodeKind] ?? { layer: "Evidence", label: type };
 }
 
 /* -------------------------------------------------------------- edge kinds */

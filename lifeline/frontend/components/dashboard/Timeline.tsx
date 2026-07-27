@@ -6,11 +6,20 @@
  * Newest first, so the last thing that happened is the first thing you read.
  * Hovering an event highlights the nodes that hop touched in the graph — the
  * timeline and the canvas are two views of the same traversal.
+ *
+ * Capped to the latest few hops by default — a completed pipeline run leaves
+ * 20+ events, and rendering all of them at once was the single biggest thing
+ * pushing the right column into constant scrolling. "Show all" is one click
+ * away and never hides data, just how much of it is on screen at once.
  */
+
+import { useState } from "react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { VIZ, walkerColor } from "@/lib/graph-theme";
 import type { TimelineEventDTO, WalkerRunStatus } from "@/types/lifeline";
+
+const COLLAPSED_COUNT = 5;
 
 type Props = {
   events: TimelineEventDTO[];
@@ -39,7 +48,10 @@ function formatClock(iso: string): string {
 }
 
 export function Timeline({ events, onHoverEvent }: Props) {
+  const [expanded, setExpanded] = useState(false);
   const ordered = [...events].reverse();
+  const hasMore = ordered.length > COLLAPSED_COUNT;
+  const visible = expanded ? ordered : ordered.slice(0, COLLAPSED_COUNT);
 
   return (
     <Card className="shrink-0">
@@ -62,7 +74,7 @@ export function Timeline({ events, onHoverEvent }: Props) {
           </p>
         ) : (
           <ol className="space-y-0">
-            {ordered.map((event, index) => {
+            {visible.map((event, index) => {
               const color = walkerColor(event.walker);
               const runColor = runStatusColor(event.status);
               const nodeIds = event.node_ids ?? [];
@@ -80,7 +92,7 @@ export function Timeline({ events, onHoverEvent }: Props) {
                       className="absolute top-[7px] h-1.5 w-1.5 rounded-full ring-2"
                       style={{ background: runColor, ["--tw-ring-color" as string]: "hsl(var(--card))" }}
                     />
-                    {index < ordered.length - 1 ? (
+                    {index < visible.length - 1 ? (
                       <span className="absolute top-3 h-[calc(100%-4px)] w-px bg-border" />
                     ) : null}
                   </span>
@@ -114,6 +126,15 @@ export function Timeline({ events, onHoverEvent }: Props) {
             })}
           </ol>
         )}
+        {hasMore ? (
+          <button
+            type="button"
+            onClick={() => setExpanded((v) => !v)}
+            className="mt-1.5 w-full rounded-md py-1.5 text-center text-[11px] text-primary/80 transition-colors hover:bg-accent/40 hover:text-primary"
+          >
+            {expanded ? "Show fewer hops" : `Show all ${ordered.length} hops`}
+          </button>
+        ) : null}
       </CardContent>
     </Card>
   );

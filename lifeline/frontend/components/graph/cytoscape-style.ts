@@ -7,8 +7,23 @@
 
 import type cytoscape from "cytoscape";
 
-import { EDGES, KINDS, severityToken, VIZ } from "@/lib/graph-theme";
+import { EDGES, severityToken, VIZ } from "@/lib/graph-theme";
+import { iconDataUri } from "@/lib/icons";
 import type { EdgeKind, NodeKind, Severity } from "@/types/lifeline";
+
+const NODE_KINDS: NodeKind[] = [
+  "Incident",
+  "Report",
+  "Source",
+  "Hospital",
+  "Shelter",
+  "SupplyDepot",
+  "Bridge",
+  "Road",
+  "Vehicle",
+  "Resource",
+  "CitizenGroup",
+];
 
 /**
  * Severity buckets to style, in ascending order of alarm. "unknown" is left at
@@ -95,14 +110,22 @@ export function buildStylesheet(): cytoscape.CytoscapeOptions["style"] {
     },
   ];
 
-  // Type → shape + size. Shape carries identity, so it is set per type only.
-  for (const [kind, spec] of Object.entries(KINDS) as [NodeKind, (typeof KINDS)[NodeKind]][]) {
+  // Type → size + literal icon. Every node is the same circle; the pictogram
+  // (not a polygon silhouette) carries identity, which is both more legible at
+  // a glance and calmer with eleven kinds on screen at once.
+  for (const kind of NODE_KINDS) {
     style.push({
       selector: `node[type = "${kind}"]`,
       style: {
-        shape: spec.shape,
         width: SIZE[kind] ?? DEFAULT_SIZE,
         height: SIZE[kind] ?? DEFAULT_SIZE,
+        "background-image": iconDataUri(kind),
+        "background-fit": "none",
+        "background-width": "58%",
+        "background-height": "58%",
+        "background-position-x": "50%",
+        "background-position-y": "50%",
+        "background-image-opacity": 1,
       },
     });
   }

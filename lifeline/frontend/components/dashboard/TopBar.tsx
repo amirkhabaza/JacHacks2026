@@ -63,7 +63,7 @@ export function TopBar({
   const copy = BRIDGE_COPY[bridge];
 
   return (
-    <header className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-border px-4 py-2.5 backdrop-blur">
+    <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-2 backdrop-blur">
       <div className="flex min-w-0 items-center gap-3">
         <Link href="/" className="flex min-w-0 items-center gap-2.5" title="Back to lifeline.app">
           <Image
@@ -124,6 +124,6 @@ export function TopBar({
           ))}
         </div>
       </div>
-    </header>
+    </div>
   );
 }

@@ -295,34 +295,38 @@ export function Dashboard() {
 
   return (
     <div className="flex min-h-screen flex-col lg:h-screen lg:overflow-hidden">
-      <TopBar
-        scenarios={SCENARIO_LIST}
-        activeScenario={demo.scenario}
-        scenarioTitle={
-          isLive
-            ? payload.nodes.find((n) => n.type === "Incident")?.label ??
-              payload.incident_id ??
-              SCENARIOS[demo.scenario].title
-            : SCENARIOS[demo.scenario].title
-        }
-        bridge={bridge.status}
-        bridgeDetail={bridge.detail}
-        busy={busy || autoplaying}
-        onScenario={(name) => void onScenario(name)}
-      />
+      {/* One bordered header block, not two stacked toolbars: the brand row and
+          the pipeline progress strip share a single bottom border and background. */}
+      <header className="border-b border-border bg-card/20">
+        <TopBar
+          scenarios={SCENARIO_LIST}
+          activeScenario={demo.scenario}
+          scenarioTitle={
+            isLive
+              ? payload.nodes.find((n) => n.type === "Incident")?.label ??
+                payload.incident_id ??
+                SCENARIOS[demo.scenario].title
+              : SCENARIOS[demo.scenario].title
+          }
+          bridge={bridge.status}
+          bridgeDetail={bridge.detail}
+          busy={busy || autoplaying}
+          onScenario={(name) => void onScenario(name)}
+        />
 
-      <WalkerPipeline
-        steps={steps}
-        stage={stage}
-        ingestedCount={ingestedCount}
-        reportCount={feed.length}
-        autoplaying={autoplaying}
-        // In live mode the Jac bridge runs the pipeline itself on ingest.
-        disabled={busy || isLive}
-        onAdvance={onAdvance}
-        onAutoplay={() => void onAutoplay()}
-        onReset={onReset}
-      />
+        <WalkerPipeline
+          steps={steps}
+          stage={stage}
+          ingestedCount={ingestedCount}
+          reportCount={feed.length}
+          autoplaying={autoplaying}
+          // In live mode the Jac bridge runs the pipeline itself on ingest.
+          disabled={busy || isLive}
+          onAdvance={onAdvance}
+          onAutoplay={() => void onAutoplay()}
+          onReset={onReset}
+        />
+      </header>
 
       <main className="grid min-h-0 flex-1 grid-cols-1 gap-3 p-3 lg:grid-cols-12">
         <section className="flex min-h-0 flex-col gap-3 lg:col-span-3">
